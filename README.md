@@ -11,4 +11,6 @@ This notebook takes in the financial and news input and aggregates them into sep
 # Constructing the LSTM model and backtesting `LSTM.ipynb`
 This notebook creates two models for each of the `ticker`s available (one BASE, having only financial inputs, and NLP - boosted with `sentiment` and `VADER` score), resulting in overall 20 models and 20 equity curves.
 
-# Ensembling the financial basket and displaying the backtest data
+# Ensembling the financial basket and displaying the backtest data `PerformanceMetrics.ipynb`
+This notebook generates metrics for strategies mentioned.
+
