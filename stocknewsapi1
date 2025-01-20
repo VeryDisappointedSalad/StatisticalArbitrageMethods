@@ -1,0 +1,126 @@
+import requests
+import pandas as pd
+from datetime import datetime, timedelta
+from google.colab import files
+
+API_KEY = "..."
+
+# Tickers array
+tickers = [
+    "INTC",
+    "TSM",
+    "QCOM",
+    "TXN",
+    "MU",
+    "ASML",
+    "MRVL",
+    "AVGO",
+    "NVDA",
+    "AMD" 
+]
+
+# New date range: Jan 1, 2023 to Jan 18, 2025
+start_date = datetime(2023, 1, 1)
+end_date   = datetime(2025, 1, 18)  # inclusive date => we'll interpret as end_date+1 for exclusivity if you prefer
+
+all_articles = []
+
+def fetch_range(api_key, ticker, start_str, end_str, items=100):
+    """
+    Single call to StockNewsAPI for a given ticker, date=start_str-end_str (MMDDYYYY).
+    Returns a list of article dicts, or [] if none/error.
+    """
+    url = (
+        "https://stocknewsapi.com/api/v1?"
+        f"tickers={ticker}&"
+        f"items={items}&"
+        f"date={start_str}-{end_str}&"
+        "sortby=rank&"
+        f"token={api_key}"
+    )
+
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        data = resp.json()
+        return data.get("data", [])
+    else:
+        print(f"Error {resp.status_code}: {resp.text}")
+        return []
+
+def split_if_100(api_key, ticker, start_d, end_d, items=100):
+    """
+    Recursively fetch 'ticker' articles from start_d..end_d.
+    - If <100 => filter & return articles.
+    - If 100 => split in half, recursively do the same on each half.
+    - If we reach a single day with 100 => accept 100.
+    """
+    if start_d > end_d:
+        return []
+
+    s_str = start_d.strftime("%m%d%Y")
+    e_str = end_d.strftime("%m%d%Y")
+
+    days_diff = (end_d - start_d).days
+    single_day = (days_diff == 0)
+
+    # Fetch
+    results = fetch_range(api_key, ticker, s_str, e_str, items)
+    count_r = len(results)
+
+    if count_r < 100 or single_day:
+        # Filter fields + add "ticker"
+        if count_r > 0:
+            filtered = []
+            for art in results:
+                filtered.append({
+                    "text":      art.get("text", ""),
+                    "date":      art.get("date", ""),
+                    "sentiment": art.get("sentiment", ""),
+                    "tickers":   art.get("tickers", []),
+                    "ticker":    ticker
+                })
+            if single_day and count_r == 100:
+                print(f"{s_str}: Single day has 100 => can't subdivide further, accepting 100.")
+            else:
+                print(f"{s_str}-{e_str}: {count_r} articles. (No further split needed).")
+            return filtered
+        else:
+            print(f"{s_str}-{e_str}: 0 articles or error.")
+            return []
+    else:
+        # = 100 & more than one day => split
+        print(f"{s_str}-{e_str}: 100 articles => splitting further...")
+        half = days_diff // 2
+        mid_date = start_d + timedelta(days=half)
+
+        # subrange 1: [start_d..mid_date-1]
+        # subrange 2: [mid_date..end_d]
+        sub1_end = mid_date - timedelta(days=1)
+        if sub1_end < start_d:
+            sub1_end = start_d
+
+        sub1_articles = split_if_100(api_key, ticker, start_d, sub1_end, items)
+        sub2_articles = split_if_100(api_key, ticker, mid_date, end_d, items)
+        return sub1_articles + sub2_articles
+
+# Adjust end_date if you want Jan 18 included (i.e., make end_date + timedelta(days=1) for exclusive).
+# For now, we'll treat end_date as inclusive. If you prefer an exclusive approach, do end_date + 1 day below.
+
+for tk in tickers:
+    print(f"\n=== TICKER: {tk} ===")
+    # We'll treat end_date as inclusive. If you prefer exclusive, do (end_date - timedelta(days=1)).
+    results_ticker = split_if_100(API_KEY, tk, start_date, end_date, ITEMS_PER_CALL)
+    print(f"Collected {len(results_ticker)} articles for {tk}.\n")
+    all_articles.extend(results_ticker)
+
+print(f"\nTotal final articles across all tickers: {len(all_articles)}")
+
+if all_articles:
+    df = pd.DataFrame(all_articles)
+    csv_filename = "multi_tickers_2023to2025_recursive_split.csv"
+    df.to_csv(csv_filename, index=False)
+
+    files.download(csv_filename)
+    print(f"\nSaved and downloaded '{csv_filename}' with {len(df)} articles.")
+else:
+    print("No articles found in the final result.")
