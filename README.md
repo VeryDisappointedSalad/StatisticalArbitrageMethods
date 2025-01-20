@@ -1,8 +1,8 @@
 # StatisticalArbitrageMethods
 Repository for group A for Statistical Arbitrage Methods 2025Z @MIMUW. The subject was to build a trading strategy on semiconductor/ technology sector minute frequency stocks and test, whether ensembling financial data with sentiment analysis from news may improve overall return. The project was divided into several parts.
 
-# Financial data scraping
-
+# Financial data scraping `FinancialDataScraping.ipynb`
+This notebook is designed to fetch and compile historical stock data for major microprocessor and semiconductor companies from Polygon.io. It aims to facilitate backtesting and analysis of statistical arbitrage strategies by providing detailed minute-level stock price data for companies like NVIDIA, AMD, Intel, and others over a specified period.
 # News data scraping
 
 # Parsing data and feature engineering `FeatureEngineering.ipynb`
