@@ -14,3 +14,8 @@ This notebook creates two models for each of the `ticker`s available (one BASE, 
 # Ensembling the financial basket and displaying the backtest data `PerformanceMetrics.ipynb`
 This notebook generates metrics for strategies mentioned.
 
+# polygon.io
+This script leverages the Polygon.io API to retrieve news articles. While it was originally set up with SPY and a predefined list of economic/political keywords, it can be customized to suit different tickers and key phrases. The script was, in fact, used with altered keywords and tickers to fetch related data on the semiconductor/technology sector. It automatically handles query limits by splitting weekly ranges into half-weeks or days, saving the output (including keywords, date ranges, and tickers) to CSV files.
+
+# stocknewsapi1
+This script uses the StockNewsAPI to recursively scrape news for a list of tickers. Although the default configuration targets well-known semiconductor stocks (e.g., AMD, NVDA), it can be adapted to any ticker symbols and date ranges required. The code was employed with modified tickers and keywords to obtain similar semiconductor-focused data. Whenever an API call returns the maximum number of articles, the script halves the date range to ensure comprehensive coverage, ultimately storing each item’s text, sentiment, and ticker information in a CSV file.
